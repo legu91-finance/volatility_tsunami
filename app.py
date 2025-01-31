@@ -1,6 +1,7 @@
 import streamlit as st
 import datetime
 from volatility_tsunami import VolatilityTsunamiAnalyzer
+import plotly.express as px
 
 st.set_page_config(layout="wide", page_title="Volatility Tsunami Dashboard")
 
@@ -60,6 +61,87 @@ if start_date and end_date:
                 # Display plots
                 fig = analyzer.create_plots(processed_data)
                 st.pyplot(fig)
+                
+                # Add this after the existing imports
+                import plotly.express as px
+
+                # Add this after the sidebar settings
+                st.sidebar.markdown("---")
+                st.sidebar.header("Backtesting")
+                if st.sidebar.button("Run Backtest"):
+                    with st.spinner('Running backtest...'):
+                        # Fetch data for backtesting
+                        data = analyzer.fetch_data()
+                        
+                        # Run backtest
+                        results = analyzer.backtest_parameters(
+                            data,
+                            std_windows_range=(5, 50, 5),
+                            percentile_thresholds_range=(5, 30, 5)
+                        )
+                        
+                        # Display results
+                        st.subheader("Backtest Results")
+                        
+                        # Create tabs for different metrics
+                        tab1, tab2, tab3 = st.tabs(["Win Rate", "Mean Return", "Sharpe Ratio"])
+                        
+                        with tab1:
+                            # Win rate heatmaps
+                            metrics = ['win_rate_5d', 'win_rate_10d', 'win_rate_20d']
+                            periods = [5, 10, 20]
+                            
+                            for metric, period in zip(metrics, periods):
+                                fig = px.density_heatmap(
+                                    results,
+                                    x='std_window',
+                                    y='percentile',
+                                    z=metric,
+                                    title=f'{period}-Day Win Rate',
+                                    labels={metric: 'Win Rate', 'std_window': 'STD Window', 'percentile': 'Percentile'},
+                                )
+                                st.plotly_chart(fig)
+                            
+                            # Show optimal parameters for 10-day win rate
+                            optimal = analyzer.get_optimal_parameters(
+                                results, 
+                                metric='win_rate_10d',
+                                min_signals=10
+                            )
+                            st.write("Optimal parameters (based on 10-day win rate):")
+                            st.write(optimal)
+                        
+                        with tab2:
+                            # Mean return heatmaps
+                            metrics = ['mean_return_5d', 'mean_return_10d', 'mean_return_20d']
+                            periods = [5, 10, 20]
+                            
+                            for metric, period in zip(metrics, periods):
+                                fig = px.density_heatmap(
+                                    results,
+                                    x='std_window',
+                                    y='percentile',
+                                    z=metric,
+                                    title=f'{period}-Day Mean Return',
+                                    labels={metric: 'Mean Return', 'std_window': 'STD Window', 'percentile': 'Percentile'},
+                                )
+                                st.plotly_chart(fig)
+                        
+                        with tab3:
+                            # Sharpe ratio heatmaps
+                            metrics = ['sharpe_5d', 'sharpe_10d', 'sharpe_20d']
+                            periods = [5, 10, 20]
+                            
+                            for metric, period in zip(metrics, periods):
+                                fig = px.density_heatmap(
+                                    results,
+                                    x='std_window',
+                                    y='percentile',
+                                    z=metric,
+                                    title=f'{period}-Day Sharpe Ratio',
+                                    labels={metric: 'Sharpe Ratio', 'std_window': 'STD Window', 'percentile': 'Percentile'},
+                                )
+                                st.plotly_chart(fig)
                 
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")

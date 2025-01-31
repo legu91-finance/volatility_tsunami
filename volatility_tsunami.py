@@ -141,6 +141,69 @@ class VolatilityTsunamiAnalyzer:
         plt.tight_layout()
         return fig
 
+    def backtest_parameters(self, data, 
+                           std_windows_range=(5, 50, 5),  # (start, end, step)
+                           percentile_thresholds_range=(5, 30, 5)):
+        """
+        Perform grid search to find optimal parameters
+        Returns DataFrame with results for each parameter combination
+        """
+        results = []
+        
+        # Create parameter grid
+        std_windows = range(std_windows_range[0], std_windows_range[1], std_windows_range[2])
+        percentiles = range(percentile_thresholds_range[0], percentile_thresholds_range[1], percentile_thresholds_range[2])
+        
+        for window in std_windows:
+            for percentile in percentiles:
+                # Set parameters
+                self.std_window = window
+                self.std_percentile_threshold = percentile
+                
+                # Calculate metrics with current parameters
+                processed_data = self.calculate_metrics(data)
+                signal_stats = self.analyze_signals(processed_data)
+                
+                # Count total signals
+                total_signals = processed_data['low_dispersion_signal'].sum()
+                
+                # Store results
+                results.append({
+                    'std_window': window,
+                    'percentile': percentile,
+                    'total_signals': total_signals,
+                    'win_rate_5d': signal_stats['5d']['positive_signals'],
+                    'win_rate_10d': signal_stats['10d']['positive_signals'],
+                    'win_rate_20d': signal_stats['20d']['positive_signals'],
+                    'mean_return_5d': signal_stats['5d']['mean_return'],
+                    'mean_return_10d': signal_stats['10d']['mean_return'],
+                    'mean_return_20d': signal_stats['20d']['mean_return'],
+                    'sharpe_5d': signal_stats['5d']['mean_return'] / processed_data['VIX_fwd_5d_return'][processed_data['low_dispersion_signal']].std() if total_signals > 0 else 0,
+                    'sharpe_10d': signal_stats['10d']['mean_return'] / processed_data['VIX_fwd_10d_return'][processed_data['low_dispersion_signal']].std() if total_signals > 0 else 0,
+                    'sharpe_20d': signal_stats['20d']['mean_return'] / processed_data['VIX_fwd_20d_return'][processed_data['low_dispersion_signal']].std() if total_signals > 0 else 0
+                })
+        
+        return pd.DataFrame(results)
+
+    def get_optimal_parameters(self, results_df, metric='win_rate_10d', min_signals=10):
+        """
+        Find optimal parameters based on specified metric
+        """
+        # Filter for minimum number of signals
+        filtered_results = results_df[results_df['total_signals'] >= min_signals]
+        
+        # Find best parameters
+        best_result = filtered_results.loc[filtered_results[metric].idxmax()]
+        
+        return {
+            'std_window': int(best_result['std_window']),
+            'percentile': int(best_result['percentile']),
+            'total_signals': best_result['total_signals'],
+            'win_rate_5d': best_result['win_rate_5d'],
+            'win_rate_10d': best_result['win_rate_10d'],
+            'win_rate_20d': best_result['win_rate_20d']
+        }
+
 def fetch_and_process_data(start_date, end_date):
     analyzer = VolatilityTsunamiAnalyzer(start_date, end_date)
     data = analyzer.fetch_data()
