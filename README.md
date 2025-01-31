@@ -2,6 +2,9 @@
 
 A Streamlit dashboard for analyzing volatility dispersion signals in the market, based on VIX and VVIX behavior. This tool helps identify potential market opportunities when both VIX and VVIX show unusually low dispersion.
 
+oriented on the Paper of Andrew Thrasher "Forecasting a Volatility Tsunami"
+https://caia.org/sites/default/files/forecasting_a_volatility_tsunami.pdf 
+
 ## Features
 
 - Real-time data fetching from Yahoo Finance
