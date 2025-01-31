@@ -107,6 +107,10 @@ class VolatilityTsunamiAnalyzer:
     
     def create_plots(self, data):
         """Create and return plotly figures"""
+        # Calculate percentile values
+        vix_percentile = np.percentile(data['VIX Std'].dropna(), self.std_percentile_threshold)
+        vvix_percentile = np.percentile(data['VVIX Std'].dropna(), self.std_percentile_threshold)
+        
         # Create figure with subplots
         fig = make_subplots(rows=4, cols=1, 
                            subplot_titles=('S&P 500 Close Price', 'VIX', 'VVIX', '10-Year minus 13-Week Yield Spread'),
@@ -131,10 +135,11 @@ class VolatilityTsunamiAnalyzer:
             go.Scatter(x=data.index, y=data['VIX'], name='VIX', line=dict(color='#E67E22')),
             row=2, col=1
         )
-        vix_std_low = data[data['VIX_std_percentile'] < 67].index
+        vix_std_low = data[data['VIX Std'] < vix_percentile].index
         fig.add_trace(
             go.Scatter(x=vix_std_low, y=data.loc[vix_std_low, 'VIX'],
-                      mode='markers', name='VIX std below 0.67',
+                      mode='markers', 
+                      name=f'VIX std below {self.std_percentile_threshold}th percentile ({vix_percentile:.2f})',
                       marker=dict(color='red', size=8)),
             row=2, col=1
         )
@@ -144,10 +149,11 @@ class VolatilityTsunamiAnalyzer:
             go.Scatter(x=data.index, y=data['VVIX'], name='VVIX', line=dict(color='#27AE60')),
             row=3, col=1
         )
-        vvix_std_low = data[data['VVIX_std_percentile'] < 3.46].index
+        vvix_std_low = data[data['VVIX Std'] < vvix_percentile].index
         fig.add_trace(
             go.Scatter(x=vvix_std_low, y=data.loc[vvix_std_low, 'VVIX'],
-                      mode='markers', name='VVIX std below 3.46',
+                      mode='markers', 
+                      name=f'VVIX std below {self.std_percentile_threshold}th percentile ({vvix_percentile:.2f})',
                       marker=dict(color='blue', size=8)),
             row=3, col=1
         )
