@@ -27,8 +27,8 @@ A Streamlit dashboard for analyzing volatility dispersion signals in the market,
 ## Installation
 
 1. Clone the repository:
-bash
-git clone https://github.com/yourusername/volatility-tsunami.git
+
+git clone https://github.com/legu91-finance/volatility_tsunami
 cd volatility-tsunami
 
 2. Install required packages:
