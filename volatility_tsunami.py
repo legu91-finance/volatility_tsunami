@@ -10,6 +10,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import matplotlib.style as style
+import plotly.graph_objects as go
+from plotly.subplots import make_subplots
 
 class VolatilityTsunamiAnalyzer:
     def __init__(self, start_date, end_date, 
@@ -104,53 +106,77 @@ class VolatilityTsunamiAnalyzer:
         return signal_stats
     
     def create_plots(self, data):
-        """Create and return matplotlib plots"""
-        import matplotlib.pyplot as plt
-        import matplotlib.style as style
-        
-        # Set modern style using a built-in style
-        plt.style.use('fivethirtyeight')  # Changed from 'seaborn' to 'fivethirtyeight'
-        
+        """Create and return plotly figures"""
         # Create figure with subplots
-        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(16, 12))
+        fig = make_subplots(rows=4, cols=1, 
+                           subplot_titles=('S&P 500 Close Price', 'VIX', 'VVIX', '10-Year minus 13-Week Yield Spread'),
+                           vertical_spacing=0.1)
         
         # Plot 1: S&P 500 Close Price with signals
-        ax1.plot(data.index, data['SPX'], label='S&P 500 close', color='#2E86C1', linewidth=1.5)
+        fig.add_trace(
+            go.Scatter(x=data.index, y=data['SPX'], name='S&P 500', line=dict(color='#2E86C1')),
+            row=1, col=1
+        )
         # Add signal dots
         signal_dates = data[data['low_dispersion_signal'] == True].index
-        ax1.scatter(signal_dates, data.loc[signal_dates, 'SPX'], 
-                   color='red', s=50, label='Low Dispersion Signal (15th percentile)')
-        ax1.set_title('S&P 500 Close Price', fontsize=12, pad=10)
-        ax1.legend(frameon=True)
+        fig.add_trace(
+            go.Scatter(x=signal_dates, y=data.loc[signal_dates, 'SPX'],
+                      mode='markers', name='Low Dispersion Signal',
+                      marker=dict(color='red', size=8)),
+            row=1, col=1
+        )
         
-        # Plot 2: VIX and VVIX with std markers
-        ax2.plot(data.index, data['VIX'], label='VIX', color='#E67E22', linewidth=1.5)
-        ax2.plot(data.index, data['VVIX'], label='VVIX', color='#27AE60', linewidth=1.5)
-        # Add VIX std markers
+        # Plot 2: VIX with signals
+        fig.add_trace(
+            go.Scatter(x=data.index, y=data['VIX'], name='VIX', line=dict(color='#E67E22')),
+            row=2, col=1
+        )
         vix_std_low = data[data['VIX_std_percentile'] < 67].index
+        fig.add_trace(
+            go.Scatter(x=vix_std_low, y=data.loc[vix_std_low, 'VIX'],
+                      mode='markers', name='VIX std below 0.67',
+                      marker=dict(color='red', size=8)),
+            row=2, col=1
+        )
+        
+        # Plot 3: VVIX with signals
+        fig.add_trace(
+            go.Scatter(x=data.index, y=data['VVIX'], name='VVIX', line=dict(color='#27AE60')),
+            row=3, col=1
+        )
         vvix_std_low = data[data['VVIX_std_percentile'] < 3.46].index
-        ax2.scatter(vix_std_low, data.loc[vix_std_low, 'VIX'], 
-                   color='red', s=50, label='VIX std below 0.67')
-        ax2.scatter(vvix_std_low, data.loc[vvix_std_low, 'VVIX'], 
-                   color='blue', s=50, label='VVIX std below 3.46')
-        ax2.set_title('VIX and VVIX', fontsize=12, pad=10)
-        ax2.legend(frameon=True)
+        fig.add_trace(
+            go.Scatter(x=vvix_std_low, y=data.loc[vvix_std_low, 'VVIX'],
+                      mode='markers', name='VVIX std below 3.46',
+                      marker=dict(color='blue', size=8)),
+            row=3, col=1
+        )
         
-        # Plot 3: Yield Spread
+        # Plot 4: Yield Spread
         spread = data['10year_yield'] - data['13w_yield']
-        ax3.plot(data.index, spread, label='10y-13w Spread', 
-                 color='#C0392B', linewidth=1.5)
-        ax3.set_title('10-Year minus 13-Week Yield Spread', fontsize=12, pad=10)
-        ax3.legend(frameon=True)
+        fig.add_trace(
+            go.Scatter(x=data.index, y=spread, name='10y-13w Spread',
+                      line=dict(color='#C0392B')),
+            row=4, col=1
+        )
         
-        # Style improvements
-        for ax in [ax1, ax2, ax3]:
-            ax.spines['top'].set_visible(False)
-            ax.spines['right'].set_visible(False)
-            ax.tick_params(labelsize=10)
+        # Update layout
+        fig.update_layout(
+            height=1200,
+            width=1200,
+            showlegend=True,
+            template='plotly_white',
+            title_text="Market Analysis Dashboard",
+            title_x=0.5,
+            title_font_size=20,
+        )
         
-        # Adjust layout to prevent overlap
-        plt.tight_layout()
+        # Update y-axes labels
+        fig.update_yaxes(title_text="Price", row=1, col=1)
+        fig.update_yaxes(title_text="VIX", row=2, col=1)
+        fig.update_yaxes(title_text="VVIX", row=3, col=1)
+        fig.update_yaxes(title_text="Spread", row=4, col=1)
+        
         return fig
 
     def backtest_parameters(self, data, 

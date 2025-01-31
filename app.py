@@ -60,7 +60,7 @@ if start_date and end_date:
                 
                 # Display plots
                 fig = analyzer.create_plots(processed_data)
-                st.pyplot(fig)
+                st.plotly_chart(fig, use_container_width=True)
                 
                 # Add this after the existing imports
                 import plotly.express as px
