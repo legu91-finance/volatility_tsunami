@@ -9,6 +9,7 @@ import yfinance as yf
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+import matplotlib.style as style
 
 class VolatilityTsunamiAnalyzer:
     def __init__(self, start_date, end_date, 
@@ -104,27 +105,49 @@ class VolatilityTsunamiAnalyzer:
     
     def create_plots(self, data):
         """Create and return matplotlib plots"""
-        import matplotlib.pyplot as plt
+        # Set modern style
+        plt.style.use('seaborn')
         
         # Create figure with subplots
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(16, 12))
         
-        # Plot 1: S&P 500 Close Price
-        ax1.plot(data.index, data['SPX'], label='S&P 500 close', color='blue')
-        ax1.set_title('S&P 500 Close Price')
-        ax1.legend()
+        # Plot 1: S&P 500 Close Price with signals
+        ax1.plot(data.index, data['SPX'], label='S&P 500 close', color='#2E86C1', linewidth=1.5)
+        # Add signal dots
+        signal_dates = data[data['low_dispersion_signal'] == True].index
+        ax1.scatter(signal_dates, data.loc[signal_dates, 'SPX'], 
+                   color='red', s=50, label='Low Dispersion Signal (15th percentile)')
+        ax1.set_title('S&P 500 Close Price', fontsize=12, pad=10)
+        ax1.legend(frameon=True)
+        ax1.grid(True, alpha=0.3)
         
-        # Plot 2: VIX and VVIX
-        ax2.plot(data.index, data['VIX'], label='VIX', color='orange')
-        ax2.plot(data.index, data['VVIX'], label='VVIX', color='green')
-        ax2.set_title('VIX and VVIX')
-        ax2.legend()
+        # Plot 2: VIX and VVIX with std markers
+        ax2.plot(data.index, data['VIX'], label='VIX', color='#E67E22', linewidth=1.5)
+        ax2.plot(data.index, data['VVIX'], label='VVIX', color='#27AE60', linewidth=1.5)
+        # Add VIX std markers
+        vix_std_low = data[data['VIX_std_percentile'] < 67].index
+        vvix_std_low = data[data['VVIX_std_percentile'] < 3.46].index
+        ax2.scatter(vix_std_low, data.loc[vix_std_low, 'VIX'], 
+                   color='red', s=50, label='VIX std below 0.67')
+        ax2.scatter(vvix_std_low, data.loc[vvix_std_low, 'VVIX'], 
+                   color='blue', s=50, label='VVIX std below 3.46')
+        ax2.set_title('VIX and VVIX', fontsize=12, pad=10)
+        ax2.legend(frameon=True)
+        ax2.grid(True, alpha=0.3)
         
         # Plot 3: Yield Spread
-        ax3.plot(data.index, data['10year_yield'] - data['13w_yield'], 
-                 label='10y-13w Spread', color='red')
-        ax3.set_title('10-Year minus 13-Week Yield Spread')
-        ax3.legend()
+        spread = data['10year_yield'] - data['13w_yield']
+        ax3.plot(data.index, spread, label='10y-13w Spread', 
+                 color='#C0392B', linewidth=1.5)
+        ax3.set_title('10-Year minus 13-Week Yield Spread', fontsize=12, pad=10)
+        ax3.legend(frameon=True)
+        ax3.grid(True, alpha=0.3)
+        
+        # Style improvements
+        for ax in [ax1, ax2, ax3]:
+            ax.spines['top'].set_visible(False)
+            ax.spines['right'].set_visible(False)
+            ax.tick_params(labelsize=10)
         
         # Adjust layout to prevent overlap
         plt.tight_layout()
