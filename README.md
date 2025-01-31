@@ -17,6 +17,12 @@ A Streamlit dashboard for analyzing volatility dispersion signals in the market,
   - VIX and VVIX indicators
   - Rolling standard deviations
   - Yield curve spread
+- Parameter Optimization:
+  - Automated backtesting functionality
+  - Win rate optimization
+  - Mean return analysis
+  - Sharpe ratio calculations
+  - Interactive heatmaps for parameter selection
 
 ## Installation
 
@@ -36,6 +42,11 @@ The dashboard will open in your default web browser. You can:
 2. Adjust analysis parameters in the sidebar
 3. View signal analysis metrics
 4. Analyze the various charts and indicators
+5. Run parameter optimization:
+   - Click "Run Backtest" in the sidebar
+   - View heatmaps for different metrics
+   - Find optimal parameters based on win rate
+   - Analyze performance across different time horizons
 
 ## Dependencies
 
@@ -44,6 +55,7 @@ The dashboard will open in your default web browser. You can:
 - pandas
 - numpy
 - matplotlib
+- plotly
 
 ## Project Structure
 volatility-tsunami/
@@ -59,7 +71,23 @@ The dashboard implements a volatility dispersion analysis strategy that looks fo
 - Low rolling standard deviation in VVIX
 - Coincident signals in both metrics below specified percentile thresholds
 
-When these conditions align, it may indicate a potential "volatility tsunami" setup.
+### Parameter Optimization
+
+The backtesting functionality helps optimize two key parameters:
+1. Standard Deviation Window (5-50 days)
+2. Percentile Threshold (5-30%)
+
+Metrics calculated for each parameter combination:
+- Win rates for 5, 10, and 20-day periods
+- Mean returns for each period
+- Sharpe ratios to assess risk-adjusted returns
+- Total number of signals generated
+
+The optimization process:
+1. Performs grid search across parameter space
+2. Filters results by minimum signal count
+3. Identifies optimal parameters based on chosen metric
+4. Visualizes results through interactive heatmaps
 
 ## Contributing
 
@@ -71,4 +99,4 @@ MIT License
 
 ## Disclaimer
 
-This tool is for informational purposes only. It is not financial advice, and you should not make investment decisions based solely on this analysis.
+This tool is for informational purposes only. It is not financial advice, and you should not make investment decisions based solely on this analysis. Past performance does not guarantee future results.
