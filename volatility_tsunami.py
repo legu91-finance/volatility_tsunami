@@ -24,10 +24,11 @@ class VolatilityTsunamiAnalyzer:
         
     def fetch_data(self):
         """Fetch data from Yahoo Finance"""
-        data = yf.download(self.tickers, start=self.start_date, end=self.end_date)
-        data_close = data["Adj Close"]
-        data_close.columns = ["SPX", "13w_yield", "10year_yield", "VIX", "VVIX"]
-        return data_close
+        data = yf.download('^GSPC', start=self.start_date, end=self.end_date)
+        price_column = 'Adj Close' if 'Adj Close' in data.columns else 'Close'
+        prices = data[price_column]
+        prices.columns = ["SPX", "13w_yield", "10year_yield", "VIX", "VVIX"]
+        return prices
     
     def calculate_metrics(self, data):
         """Calculate metrics as per the paper's methodology"""
