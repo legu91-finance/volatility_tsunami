@@ -106,8 +106,8 @@ class VolatilityTsunamiAnalyzer:
         """Create and return matplotlib plots"""
         import matplotlib.pyplot as plt
         
-        # Create figure with adjusted size
-        fig, ax = plt.subplots(figsize=(12, 6))  # Reduced from (16, 8) to (12, 6)
+        # Create figure with original size
+        fig, ax = plt.subplots(figsize=(16, 8))  # Reverted to original size
         
         rolling_low_vix, rolling_low_mask_vix, rolling_low_vvix, rolling_low_mask_vvix = self.calculate_rolling_lows(data)
         vix_percentile = np.percentile(data['VIX Std'].dropna(), self.std_percentile_threshold)

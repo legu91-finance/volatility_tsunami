@@ -98,11 +98,9 @@ if start_date and end_date:
                                     y='percentile',
                                     z=metric,
                                     title=f'{period}-Day Win Rate',
-                                    labels={metric: 'Win Rate', 'std_window': 'STD Window', 'percentile': 'Percentile'},
-                                    width=800,
-                                    height=500
+                                    labels={metric: 'Win Rate', 'std_window': 'STD Window', 'percentile': 'Percentile'}
                                 )
-                                st.plotly_chart(fig, use_container_width=True)
+                                st.plotly_chart(fig)
                             
                             # Show optimal parameters for 10-day win rate
                             optimal = analyzer.get_optimal_parameters(
