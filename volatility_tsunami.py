@@ -105,8 +105,11 @@ class VolatilityTsunamiAnalyzer:
     
     def create_plots(self, data):
         """Create and return matplotlib plots"""
-        # Set modern style
-        plt.style.use('seaborn')
+        import matplotlib.pyplot as plt
+        import matplotlib.style as style
+        
+        # Set modern style using a built-in style
+        plt.style.use('fivethirtyeight')  # Changed from 'seaborn' to 'fivethirtyeight'
         
         # Create figure with subplots
         fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(16, 12))
@@ -119,7 +122,6 @@ class VolatilityTsunamiAnalyzer:
                    color='red', s=50, label='Low Dispersion Signal (15th percentile)')
         ax1.set_title('S&P 500 Close Price', fontsize=12, pad=10)
         ax1.legend(frameon=True)
-        ax1.grid(True, alpha=0.3)
         
         # Plot 2: VIX and VVIX with std markers
         ax2.plot(data.index, data['VIX'], label='VIX', color='#E67E22', linewidth=1.5)
@@ -133,7 +135,6 @@ class VolatilityTsunamiAnalyzer:
                    color='blue', s=50, label='VVIX std below 3.46')
         ax2.set_title('VIX and VVIX', fontsize=12, pad=10)
         ax2.legend(frameon=True)
-        ax2.grid(True, alpha=0.3)
         
         # Plot 3: Yield Spread
         spread = data['10year_yield'] - data['13w_yield']
@@ -141,7 +142,6 @@ class VolatilityTsunamiAnalyzer:
                  color='#C0392B', linewidth=1.5)
         ax3.set_title('10-Year minus 13-Week Yield Spread', fontsize=12, pad=10)
         ax3.legend(frameon=True)
-        ax3.grid(True, alpha=0.3)
         
         # Style improvements
         for ax in [ax1, ax2, ax3]:
