@@ -106,54 +106,27 @@ class VolatilityTsunamiAnalyzer:
         """Create and return matplotlib plots"""
         import matplotlib.pyplot as plt
         
-        # Create figure with original size
-        fig, ax = plt.subplots(figsize=(16, 8))  # Reverted to original size
+        # Create figure with subplots
+        fig, (ax1, ax2, ax3) = plt.subplots(3, 1, figsize=(16, 12))
         
-        rolling_low_vix, rolling_low_mask_vix, rolling_low_vvix, rolling_low_mask_vvix = self.calculate_rolling_lows(data)
-        vix_percentile = np.percentile(data['VIX Std'].dropna(), self.std_percentile_threshold)
-        vvix_percentile = np.percentile(data['VVIX Std'].dropna(), self.std_percentile_threshold)
+        # Plot 1: S&P 500 Close Price
+        ax1.plot(data.index, data['SPX'], label='S&P 500 close', color='blue')
+        ax1.set_title('S&P 500 Close Price')
+        ax1.legend()
         
-        # Plot 1: S&P 500
-        ax.plot(data.index, data['SPX'], label='S&P 500 close')
-        ax.scatter(data.index[data['low_dispersion_signal']], 
-                   data['SPX'][data['low_dispersion_signal']], 
-                   c='red', label=f'Low Dispersion Signal ({self.std_percentile_threshold}th percentile)')
-        ax.legend()
-        ax.set_ylabel('closing price')
-        ax.set_title('S&P 500 close')
+        # Plot 2: VIX and VVIX
+        ax2.plot(data.index, data['VIX'], label='VIX', color='orange')
+        ax2.plot(data.index, data['VVIX'], label='VVIX', color='green')
+        ax2.set_title('VIX and VVIX')
+        ax2.legend()
         
-        # Plot 2: VIX
-        ax.plot(data.index, data['VIX'], label='VIX')
-        ax.scatter(data['VIX'].index[rolling_low_mask_vix], 
-                    rolling_low_vix[rolling_low_mask_vix], c="red", marker="o")
-        ax.set_ylabel('VIX close with 4-weeks low')
-        ax.legend()
+        # Plot 3: Yield Spread
+        ax3.plot(data.index, data['10year_yield'] - data['13w_yield'], 
+                 label='10y-13w Spread', color='red')
+        ax3.set_title('10-Year minus 13-Week Yield Spread')
+        ax3.legend()
         
-        # Plot 3: VVIX
-        ax.plot(data.index, data['VVIX'], label='VVIX')
-        ax.scatter(data['VVIX'].index[rolling_low_mask_vvix], 
-                    rolling_low_vvix[rolling_low_mask_vvix], c="red", marker="o")
-        ax.set_ylabel('VVIX close with 4-weeks low')
-        ax.legend()
-        
-        # Plot 4: Standard Deviations
-        ax.plot(data.index, data['VIX Std'], label='VIX Std')
-        ax.scatter(data.index[data['VIX Std'] < vix_percentile], 
-                    data['VIX Std'][data['VIX Std'] < vix_percentile], 
-                    c='red', label=f'VIX std below {vix_percentile:.2f}')
-        ax.scatter(data.index[data['VVIX Std'] < vvix_percentile], 
-                    data['VVIX Std'][data['VVIX Std'] < vvix_percentile], 
-                    c='blue', label=f'VVIX std below {vvix_percentile:.2f}')
-        ax.plot(data.index, data['VVIX Std'], label='VVIX Std')
-        ax.legend()
-        ax.set_ylabel('Standard Deviation')
-        
-        # Plot 5: Yield Curve Spread
-        ax.plot(data.index, data['yield curve spread'], label='10y-13w Spread')
-        ax.set_ylabel('YC Spread')
-        ax.legend()
-        
-        # Adjust layout
+        # Adjust layout to prevent overlap
         plt.tight_layout()
         return fig
 
