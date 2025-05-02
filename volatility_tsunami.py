@@ -45,7 +45,16 @@ class VolatilityTsunamiAnalyzer:
     
     def calculate_metrics(self, data):
         """Calculate metrics as per the paper's methodology"""
+        if data.empty:
+            raise ValueError("No data available for the specified date range")
+        
         df = data.copy()
+        
+        # Validate required columns
+        required_columns = ['VIX', 'VVIX', 'SPX', '13w_yield', '10year_yield']
+        missing_columns = [col for col in required_columns if col not in df.columns]
+        if missing_columns:
+            raise ValueError(f"Missing required columns: {missing_columns}")
         
         # Core volatility dispersion metrics
         df['VIX Std'] = df['VIX'].rolling(window=self.std_window).std()
@@ -86,21 +95,36 @@ class VolatilityTsunamiAnalyzer:
     
     def analyze_signals(self, df):
         """Analyze signal effectiveness"""
+        if df.empty:
+            return {
+                '5d': {'mean_return': 0, 'median_return': 0, 'positive_signals': 0},
+                '10d': {'mean_return': 0, 'median_return': 0, 'positive_signals': 0},
+                '20d': {'mean_return': 0, 'median_return': 0, 'positive_signals': 0}
+            }
+        
+        signal_mask = df['low_dispersion_signal']
+        if not signal_mask.any():
+            return {
+                '5d': {'mean_return': 0, 'median_return': 0, 'positive_signals': 0},
+                '10d': {'mean_return': 0, 'median_return': 0, 'positive_signals': 0},
+                '20d': {'mean_return': 0, 'median_return': 0, 'positive_signals': 0}
+            }
+        
         signal_stats = {
             '5d': {
-                'mean_return': df[df['low_dispersion_signal']]['VIX_fwd_5d_return'].mean(),
-                'median_return': df[df['low_dispersion_signal']]['VIX_fwd_5d_return'].median(),
-                'positive_signals': (df[df['low_dispersion_signal']]['VIX_fwd_5d_return'] > 0).mean()
+                'mean_return': df[signal_mask]['VIX_fwd_5d_return'].mean(),
+                'median_return': df[signal_mask]['VIX_fwd_5d_return'].median(),
+                'positive_signals': (df[signal_mask]['VIX_fwd_5d_return'] > 0).mean()
             },
             '10d': {
-                'mean_return': df[df['low_dispersion_signal']]['VIX_fwd_10d_return'].mean(),
-                'median_return': df[df['low_dispersion_signal']]['VIX_fwd_10d_return'].median(),
-                'positive_signals': (df[df['low_dispersion_signal']]['VIX_fwd_10d_return'] > 0).mean()
+                'mean_return': df[signal_mask]['VIX_fwd_10d_return'].mean(),
+                'median_return': df[signal_mask]['VIX_fwd_10d_return'].median(),
+                'positive_signals': (df[signal_mask]['VIX_fwd_10d_return'] > 0).mean()
             },
             '20d': {
-                'mean_return': df[df['low_dispersion_signal']]['VIX_fwd_20d_return'].mean(),
-                'median_return': df[df['low_dispersion_signal']]['VIX_fwd_20d_return'].median(),
-                'positive_signals': (df[df['low_dispersion_signal']]['VIX_fwd_20d_return'] > 0).mean()
+                'mean_return': df[signal_mask]['VIX_fwd_20d_return'].mean(),
+                'median_return': df[signal_mask]['VIX_fwd_20d_return'].median(),
+                'positive_signals': (df[signal_mask]['VIX_fwd_20d_return'] > 0).mean()
             }
         }
         return signal_stats
