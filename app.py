@@ -37,12 +37,24 @@ if start_date and end_date:
                     std_percentile_threshold=std_percentile
                 )
                 
+                st.write("Attempting to fetch data...")
                 data = analyzer.fetch_data()
                 
                 if data.empty:
-                    st.error("No data available for the selected date range. Please try a different date range.")
+                    st.error("""
+                        No data available for the selected date range. This could be due to:
+                        1. The selected date range is too recent (market data might not be available yet)
+                        2. The selected date range includes weekends or holidays
+                        3. There might be an issue with the Yahoo Finance API
+                        
+                        Please try:
+                        1. Selecting a date range that's at least a few days old
+                        2. Using a wider date range
+                        3. Checking if the market was open during the selected period
+                    """)
                     st.stop()
                 
+                st.write("Data successfully fetched. Processing metrics...")
                 processed_data = analyzer.calculate_metrics(data)
                 
                 # Display signal analysis
@@ -64,6 +76,7 @@ if start_date and end_date:
                     st.metric("20-Day Win Rate", f"{signal_stats['20d']['positive_signals']:.2%}")
                 
                 # Display plots
+                st.write("Generating plots...")
                 fig = analyzer.create_plots(processed_data)
                 st.plotly_chart(fig, use_container_width=True, config={
                     'displayModeBar': True,
@@ -124,6 +137,11 @@ if start_date and end_date:
                             
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
-            st.error("Please try adjusting the date range or parameters.")
+            st.error("""
+                Please try:
+                1. Selecting a different date range
+                2. Adjusting the parameters
+                3. Checking if the market was open during the selected period
+            """)
     else:
         st.error("End date must be after start date") 
