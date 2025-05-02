@@ -32,6 +32,9 @@ class VolatilityTsunamiAnalyzer:
         try:
             # Validate dates
             today = datetime.date.today()
+            print(f"Today's date: {today}")
+            print(f"End date: {self.end_date}")
+            
             if self.end_date > today:
                 raise ValueError(f"End date cannot be in the future. Please select a date before {today}")
             
@@ -39,6 +42,7 @@ class VolatilityTsunamiAnalyzer:
             data = yf.download(self.tickers, start=self.start_date, end=self.end_date, group_by='ticker')
             
             if data.empty:
+                print("Data is empty from Yahoo Finance")
                 raise ValueError("No data returned from Yahoo Finance API")
             
             # Create a new DataFrame to store the closing prices
@@ -58,6 +62,7 @@ class VolatilityTsunamiAnalyzer:
             return prices
             
         except Exception as e:
+            print(f"Error in fetch_data: {str(e)}")
             raise ValueError(f"Error fetching data: {str(e)}")
     
     def calculate_metrics(self, data):
