@@ -12,7 +12,7 @@ st.sidebar.header("Analysis Settings")
 std_window = st.sidebar.slider("Standard Deviation Window", 5, 50, 20)
 std_percentile = st.sidebar.slider("Percentile Threshold", 1, 50, 15)
 
-# Date input widgets with validation
+# Date input widgets
 col1, col2 = st.columns(2)
 with col1:
     start_date = st.date_input(
@@ -29,6 +29,12 @@ with col2:
 if start_date and end_date:
     if start_date < end_date:
         try:
+            # Validate dates
+            today = datetime.date.today()
+            if end_date > today:
+                st.error(f"End date cannot be in the future. Please select a date before {today}")
+                st.stop()
+                
             with st.spinner('Fetching data...'):
                 analyzer = VolatilityTsunamiAnalyzer(
                     start_date, 
@@ -37,24 +43,12 @@ if start_date and end_date:
                     std_percentile_threshold=std_percentile
                 )
                 
-                st.write("Attempting to fetch data...")
                 data = analyzer.fetch_data()
                 
                 if data.empty:
-                    st.error("""
-                        No data available for the selected date range. This could be due to:
-                        1. The selected date range is too recent (market data might not be available yet)
-                        2. The selected date range includes weekends or holidays
-                        3. There might be an issue with the Yahoo Finance API
-                        
-                        Please try:
-                        1. Selecting a date range that's at least a few days old
-                        2. Using a wider date range
-                        3. Checking if the market was open during the selected period
-                    """)
+                    st.error("No data available for the selected date range. Please try a different date range.")
                     st.stop()
                 
-                st.write("Data successfully fetched. Processing metrics...")
                 processed_data = analyzer.calculate_metrics(data)
                 
                 # Display signal analysis
@@ -76,7 +70,6 @@ if start_date and end_date:
                     st.metric("20-Day Win Rate", f"{signal_stats['20d']['positive_signals']:.2%}")
                 
                 # Display plots
-                st.write("Generating plots...")
                 fig = analyzer.create_plots(processed_data)
                 st.plotly_chart(fig, use_container_width=True, config={
                     'displayModeBar': True,
@@ -137,11 +130,6 @@ if start_date and end_date:
                             
         except Exception as e:
             st.error(f"An error occurred: {str(e)}")
-            st.error("""
-                Please try:
-                1. Selecting a different date range
-                2. Adjusting the parameters
-                3. Checking if the market was open during the selected period
-            """)
+            st.error("Please try adjusting the date range or parameters.")
     else:
         st.error("End date must be after start date") 

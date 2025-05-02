@@ -13,6 +13,7 @@ import matplotlib.style as style
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
+import datetime
 
 class VolatilityTsunamiAnalyzer:
     def __init__(self, start_date, end_date, 
@@ -29,46 +30,35 @@ class VolatilityTsunamiAnalyzer:
     def fetch_data(self):
         """Fetch data from Yahoo Finance"""
         try:
-            # Download all tickers data
-            st.write(f"Fetching data for tickers: {self.tickers}")
-            st.write(f"Date range: {self.start_date} to {self.end_date}")
+            # Validate dates
+            today = datetime.date.today()
+            if self.end_date > today:
+                raise ValueError(f"End date cannot be in the future. Please select a date before {today}")
             
+            # Download all tickers data
             data = yf.download(self.tickers, start=self.start_date, end=self.end_date, group_by='ticker')
             
             if data.empty:
-                st.error("No data returned from Yahoo Finance API")
-                return pd.DataFrame()
-            
-            st.write(f"Data shape: {data.shape}")
-            st.write("Available columns:", data.columns)
+                raise ValueError("No data returned from Yahoo Finance API")
             
             # Create a new DataFrame to store the closing prices
             prices = pd.DataFrame()
             
             # Extract the closing prices for each ticker
             for ticker in self.tickers.split():
-                try:
-                    price_column = 'Adj Close' if f'{ticker} Adj Close' in data.columns else 'Close'
-                    prices[ticker] = data[ticker][price_column]
-                    st.write(f"Successfully added {ticker} data")
-                except Exception as e:
-                    st.error(f"Error processing {ticker}: {str(e)}")
+                price_column = 'Adj Close' if f'{ticker} Adj Close' in data.columns else 'Close'
+                prices[ticker] = data[ticker][price_column]
             
             if prices.empty:
-                st.error("No price data could be extracted")
-                return pd.DataFrame()
+                raise ValueError("No price data could be extracted")
             
             # Rename columns to be more descriptive
             prices.columns = ["VVIX", "VIX", "SPX", "13w_yield", "10year_yield"]
             
-            st.write("Final data shape:", prices.shape)
-            st.write("Final columns:", prices.columns)
-            
             return prices
             
         except Exception as e:
-            st.error(f"Error in fetch_data: {str(e)}")
-            return pd.DataFrame()
+            raise ValueError(f"Error fetching data: {str(e)}")
     
     def calculate_metrics(self, data):
         """Calculate metrics as per the paper's methodology"""
